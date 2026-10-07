@@ -1,19 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-
-typedef struct {
-    int *stack;
-    int top;
-    int size;
-}Stack;
-
-void init(Stack* s);
-void destroy(Stack* s);
-void push(Stack* s, int element);
-int pop(Stack* s);
-bool isEmpty(const Stack* s);
-
+#include "Stack.h"
 
 void init(Stack* s) {
     s->size = 1;
@@ -63,42 +50,13 @@ bool isEmpty(const Stack *s) {
 }
 
 void printStack(Stack *s) {
-    int index = 0;
+    if(isEmpty(s)) {
+        printf("Cannot print, stack is empty \n");
+        return;
+    }
 
-    while(index < s->size) {
-        printf("%d, ", s->stack[index]);
-        index++;
+    for (int i = 0; i <= s->top; i++) {
+        printf("%d, ", s->stack[i]);
     }
     printf("\n");
-}
-
-int main() {
-
-    Stack stack;
-
-    init(&stack);
-
-    push(&stack, 50);
-
-    printStack(&stack);
-
-    push(&stack, 15);
-
-    printStack(&stack);
-
-    pop(&stack);
-
-    printStack(&stack);
-
-    push(&stack, 5);
-
-    printStack(&stack);
-
-    push(&stack,25);
-
-    printStack(&stack);
-
-    destroy(&stack);
-
-    return 0;
 }
