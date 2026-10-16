@@ -1,15 +1,23 @@
 #include "Stack.h"
 
+void assertAllocated(int* pointer) {
+    if (pointer == NULL) {
+        throw std::bad_alloc();
+    }
+}
+
+void assertNotEmpty(bool empty) {
+    if (empty) {
+        throw std::underflow_error("Stack underflow");
+    }
+}
+
 Stack::Stack(){
 
     size = 1;
     top = -1;
     stack = (int *)malloc(size * sizeof(int));
-
-    if (stack == NULL) {
-        std::cout<<"Failed to allocate memory!"<<std::endl;
-        exit(1);
-    }
+    assertAllocated(stack);
 
     std::cout<<"Constructor called succesfully"<<std::endl;
 
@@ -22,12 +30,10 @@ bool Stack::isEmpty() {
 void Stack::push(int element) {
 
     if (this->top + 1 == this->size) {
-        this->size *= 2;
-        int* temp = (int *)realloc(this->stack, this->size * sizeof(int));
-        if (temp == NULL) {
-            std::cout<<"Failed to allocate memory!"<<std::endl;
-        }
+        int* temp = (int *)realloc(this->stack, this->size * 2 * sizeof(int));
+        assertAllocated(temp);
         this->stack = temp;
+        this->size *= 2;
         std::cout<<"Stack resized to: "<<size<<std::endl;
 
     }
@@ -35,10 +41,7 @@ void Stack::push(int element) {
 }
 
 int Stack::pop() {
-    if(this->isEmpty()) {
-        std::cout<<"Stack underflow"<<std::endl;
-        exit(1);
-    }
+    assertNotEmpty(this->isEmpty());
 
     return this->stack[(this->top)--];
 }

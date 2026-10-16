@@ -1,5 +1,7 @@
 #include <iostream>
 #include <stdlib.h>
+#include <stdexcept>
+#include <new>
 
 #pragma once
 
