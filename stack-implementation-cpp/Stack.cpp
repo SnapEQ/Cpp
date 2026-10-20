@@ -18,9 +18,6 @@ Stack::Stack(){
     top = -1;
     stack = (int *)malloc(size * sizeof(int));
     assertAllocated(stack);
-
-    std::cout<<"Constructor called succesfully"<<std::endl;
-
 }
 
 bool Stack::isEmpty() {
@@ -34,7 +31,6 @@ void Stack::push(int element) {
         assertAllocated(temp);
         this->stack = temp;
         this->size *= 2;
-        std::cout<<"Stack resized to: "<<size<<std::endl;
 
     }
     this->stack[++(this->top)] = element;
@@ -49,7 +45,6 @@ int Stack::pop() {
 void Stack::printStack() {
 
     if(isEmpty()) {
-        std::cout<<"Cannot print, stack is empty"<<std::endl;
         return;
     }
 
@@ -61,6 +56,5 @@ void Stack::printStack() {
 
 Stack::~Stack() {
     free(stack);
-    std::cout<<"Destructor called, memory freed"<<std::endl;
 }
 

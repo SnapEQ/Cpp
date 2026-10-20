@@ -104,7 +104,24 @@ void testUnderflowAfterPop() {
 }
 
 void testTwoStacks() {
-    Stack 
+    Stack stack1;
+    Stack stack2;
+
+    stack1.push(20);
+    stack1.push(30);
+    stack1.push(50);
+
+    stack2.push(10);
+    stack2.push(20);
+    stack2.push(40);
+
+
+    check("Stack 1 pop - returns 50", stack1.pop() == 50);
+    check("Stack 1 pop - returns 30", stack1.pop() == 30);
+    check("Stack 1 pop - returns 20", stack1.pop() == 20);
+    check("Stack 2 pop - returns 40", stack1.pop() == 40);
+    check("Stack 2 pop - returns 20", stack1.pop() == 20);
+    check("Stack 2 pop - returns 10", stack1.pop() == 10);
 }
 
 int main() {
