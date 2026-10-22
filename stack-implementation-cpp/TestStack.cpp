@@ -120,9 +120,9 @@ void testTwoStacks() {
     check("Stack 1 pop - returns 50", stack1.pop() == 50);
     check("Stack 1 pop - returns 30", stack1.pop() == 30);
     check("Stack 1 pop - returns 20", stack1.pop() == 20);
-    check("Stack 2 pop - returns 40", stack1.pop() == 40);
-    check("Stack 2 pop - returns 20", stack1.pop() == 20);
-    check("Stack 2 pop - returns 10", stack1.pop() == 10);
+    check("Stack 2 pop - returns 40", stack2.pop() == 40);
+    check("Stack 2 pop - returns 20", stack2.pop() == 20);
+    check("Stack 2 pop - returns 10", stack2.pop() == 10);
 }
 
 int main() {
