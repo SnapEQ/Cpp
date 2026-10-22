@@ -14,6 +14,5 @@ void destroy(Stack* s);
 void push(Stack* s, int element);
 int pop(Stack* s);
 bool isEmpty(const Stack* s);
-void printStack(Stack* s);
 
 #endif

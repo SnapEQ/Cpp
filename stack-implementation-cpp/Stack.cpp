@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <stdexcept>
 #include "Stack.h"
 
 void assertAllocated(int* pointer) {
@@ -40,18 +42,6 @@ int Stack::pop() {
     assertNotEmpty(this->isEmpty());
 
     return this->stack[(this->top)--];
-}
-
-void Stack::printStack() {
-
-    if(isEmpty()) {
-        return;
-    }
-
-    for (int i = 0; i <= this->top; i++) {
-        std::cout<<this->stack[i]<<", ";
-    }
-    std::cout<<std::endl;
 }
 
 Stack::~Stack() {

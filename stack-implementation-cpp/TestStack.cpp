@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Stack.h"
 
 int failed = 0;
@@ -133,6 +134,7 @@ int main() {
     testPushAfterPop();
     testUnderflow();
     testUnderflowAfterPop();
+    testTwoStacks();
 
     std::cout<<std::endl;
 
