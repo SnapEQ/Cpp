@@ -1,6 +1,3 @@
-#include <iostream>
-#include <stdlib.h>
-
 #pragma once
 
 class Stack{
@@ -17,7 +14,5 @@ class Stack{
         bool isEmpty();
         void push(int element);
         int pop();
-        void printStack();
-        int getSize();
         ~Stack();
 };

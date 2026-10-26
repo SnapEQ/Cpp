@@ -1,42 +1,41 @@
+#include <stdlib.h>
+#include <stdexcept>
 #include "Stack.h"
-#include <cstddef>
 
-Stack::Stack() {
+void assertAllocated(int* pointer) {
+    if (pointer == NULL) {
+        throw std::bad_alloc();
+    }
+}
+
+void assertNotEmpty(bool empty) {
+    if (empty) {
+        throw std::underflow_error("Stack underflow");
+    }
+}
+
+Stack::Stack(){
 
     size = 1;
     top = -1;
     stack = (int *)malloc(size * sizeof(int));
-
-    if (stack == NULL) {
-        std::cout<<"Failed to allocate memory!"<<std::endl;
-        exit(1);
-    }
-
-    std::cout<<"Constructor called succesfully"<<std::endl;
-
+    assertAllocated(stack);
 }
 
 Stack::Stack(const Stack& other) {
-    top = other.top;
 
+    top = other.top;
     size = other.top + 1;
     if (size < 1) {
         size = 1;
     }
 
     stack = (int *)malloc(size * sizeof(int));
-
-    if (stack == NULL) {
-        std::cout << "Failed to allocate memory!"<<std::endl;
-        exit(1);
-    }
+    assertAllocated(stack);
 
     for (int i = 0; i <= top; i++) {
         stack[i] = other.stack[i];
     }
-
-    std::cout<< "Copy constructor called successfully" <<std::endl;
-
 }
 
 Stack& Stack::operator=(const Stack& other) {
@@ -46,26 +45,20 @@ Stack& Stack::operator=(const Stack& other) {
 
     int elementsToCopy = other.top + 1;
 
-    if (size < elementsToCopy) {
-        int* newStack = (int*)malloc(elementsToCopy * sizeof(int));
-
-        if (newStack == NULL) {
-            std::cout<<"Failed to allocate memory!"<<std::endl;
-            exit(1);
-        }
-
-        free(stack);
-        stack = newStack;
-        size = elementsToCopy;
-
+    if (this->size < elementsToCopy) {
+        int* temp = (int *)malloc(elementsToCopy * sizeof(int));
+        assertAllocated(temp);
+        free(this->stack);
+        this->stack = temp;
+        this->size = elementsToCopy;
     }
 
-        for (int i = 0; i < elementsToCopy; i++) {
-            stack[i] = other.stack[i];
-        }
+    for (int i = 0; i < elementsToCopy; i++) {
+        this->stack[i] = other.stack[i];
+    }
+    this->top = other.top;
 
-        top = other.top;
-        return *this;
+    return *this;
 }
 
 bool Stack::isEmpty() {
@@ -75,46 +68,21 @@ bool Stack::isEmpty() {
 void Stack::push(int element) {
 
     if (this->top + 1 == this->size) {
-        this->size *= 2;
-        int* temp = (int *)realloc(this->stack, this->size * sizeof(int));
-        if (temp == NULL) {
-            std::cout<<"Failed to allocate memory!"<<std::endl;
-        }
+        int* temp = (int *)realloc(this->stack, this->size * 2 * sizeof(int));
+        assertAllocated(temp);
         this->stack = temp;
-        //std::cout<<"Stack resized to: "<<size<<std::endl;
+        this->size *= 2;
 
     }
     this->stack[++(this->top)] = element;
 }
 
 int Stack::pop() {
-    if(this->isEmpty()) {
-        std::cout<<"Stack underflow"<<std::endl;
-        exit(1);
-    }
+    assertNotEmpty(this->isEmpty());
 
     return this->stack[(this->top)--];
 }
 
-void Stack::printStack() {
-
-    if(isEmpty()) {
-        std::cout<<"Cannot print, stack is empty"<<std::endl;
-        return;
-    }
-
-    for (int i = 0; i <= this->top; i++) {
-        std::cout<<this->stack[i]<<", ";
-    }
-    std::cout<<std::endl;
-}
-
-int Stack::getSize() {
-    return this->size;
-}
-
 Stack::~Stack() {
     free(stack);
-    std::cout<<"Destructor called, memory freed"<<std::endl;
 }
-
