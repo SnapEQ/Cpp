@@ -201,6 +201,32 @@ void testTwoStacks() {
     check("Stack 2 pop - returns 10", stack2.pop() == 10);
 }
 
+void runSomeFunction(Stack stack) {
+    stack.push(99);
+}
+
+void runAnotherFunction(Stack& stack) {
+    stack.push(99);
+}
+
+void debuggerScenario() {
+    Stack s1;
+    s1.push(1);
+    s1.push(2);
+    s1.push(3);
+
+    Stack s2(s1);
+
+    Stack s3 = s1;
+
+    Stack s4;
+    s4.push(10);
+    s4 = s1;
+
+    runSomeFunction(s1);
+    runAnotherFunction(s1);
+}
+
 int main() {
 
     testInit();
@@ -215,6 +241,7 @@ int main() {
     testAssignFirstLarger();
     testAssignSelf();
     testTwoStacks();
+    debuggerScenario();
 
     std::cout<<std::endl;
 
