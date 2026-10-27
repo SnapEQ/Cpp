@@ -2,13 +2,13 @@
 #include <stdexcept>
 #include "Stack.h"
 
-void assertAllocated(int* pointer) {
+void throwIfNotAllocated(int* pointer) {
     if (pointer == NULL) {
         throw std::bad_alloc();
     }
 }
 
-void assertNotEmpty(bool empty) {
+void throwIfEmpty(bool empty) {
     if (empty) {
         throw std::underflow_error("Stack underflow");
     }
@@ -19,7 +19,7 @@ Stack::Stack(){
     size = 1;
     top = -1;
     stack = (int *)malloc(size * sizeof(int));
-    assertAllocated(stack);
+    throwIfNotAllocated(stack);
 }
 
 Stack::Stack(const Stack& other) {
@@ -31,7 +31,7 @@ Stack::Stack(const Stack& other) {
     }
 
     stack = (int *)malloc(size * sizeof(int));
-    assertAllocated(stack);
+    throwIfNotAllocated(stack);
 
     for (int i = 0; i <= top; i++) {
         stack[i] = other.stack[i];
@@ -47,7 +47,7 @@ Stack& Stack::operator=(const Stack& other) {
 
     if (this->size < elementsToCopy) {
         int* temp = (int *)malloc(elementsToCopy * sizeof(int));
-        assertAllocated(temp);
+        throwIfNotAllocated(temp);
         free(this->stack);
         this->stack = temp;
         this->size = elementsToCopy;
@@ -69,7 +69,7 @@ void Stack::push(int element) {
 
     if (this->top + 1 == this->size) {
         int* temp = (int *)realloc(this->stack, this->size * 2 * sizeof(int));
-        assertAllocated(temp);
+        throwIfNotAllocated(temp);
         this->stack = temp;
         this->size *= 2;
 
@@ -78,7 +78,7 @@ void Stack::push(int element) {
 }
 
 int Stack::pop() {
-    assertNotEmpty(this->isEmpty());
+    throwIfEmpty(this->isEmpty());
 
     return this->stack[(this->top)--];
 }
