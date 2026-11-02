@@ -163,4 +163,9 @@ ComplexNumber operator/(double lhs, const ComplexNumber& rhs) {
     return lhsCmplx / rhs;
 }
 
-
+std::ostream& operator<<(std::ostream& os, const ComplexNumber& num) {
+    double imaginaryPart = num.getImaginaryPart();
+    char sign = imaginaryPart < 0 ? '-' : '+';
+    os << num.getRealPart() << ' ' << sign << ' ' << std::fabs(imaginaryPart) << 'i';
+    return os;
+}

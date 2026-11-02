@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <cmath>
 #include "Complex.h"
 
@@ -197,6 +198,24 @@ void testPhase() {
     check("phase - 2+0i returns 0", isClose(ComplexNumber(2, 0).getPhase(), 0));
 }
 
+std::string toString(const ComplexNumber& num) {
+    std::ostringstream os;
+    os << num;
+    return os.str();
+}
+
+void testStreamInsertion() {
+    check("<< - positive imaginary part", toString(ComplexNumber(3, 4)) == "3 + 4i");
+    check("<< - negative imaginary part", toString(ComplexNumber(3, -4)) == "3 - 4i");
+    check("<< - negative real part", toString(ComplexNumber(-1.5, 2)) == "-1.5 + 2i");
+    check("<< - zero", toString(ComplexNumber(0, 0)) == "0 + 0i");
+    check("<< - negative zero imaginary part", toString(ComplexNumber(3, -0.0)) == "3 + 0i");
+
+    std::ostringstream os;
+    os << ComplexNumber(1, 2) << " and " << ComplexNumber(3, -1);
+    check("<< - chaining", os.str() == "1 + 2i and 3 - 1i");
+}
+
 int main() {
 
     testInit();
@@ -215,6 +234,7 @@ int main() {
     testEqualityDouble();
     testAmplitude();
     testPhase();
+    testStreamInsertion();
 
     std::cout<<std::endl;
 
