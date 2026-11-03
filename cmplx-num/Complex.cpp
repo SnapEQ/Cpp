@@ -1,5 +1,17 @@
 #include "Complex.h"
 #include <cmath>
+#include <stdexcept>
+
+void throwIfZero(double val) {
+    if (val == 0.0) {
+        throw std::domain_error("Division by zero");
+    }
+}
+
+ComplexNumber::ComplexNumber() {
+    this->realPart = 0.0;
+    this->imaginaryPart = 0.0;
+}
 
 ComplexNumber::ComplexNumber(double realPart, double imaginaryPart) {
     this->realPart = realPart;
@@ -61,10 +73,13 @@ ComplexNumber ComplexNumber::operator/(const ComplexNumber &other) const{
     enumerator = enumerator * conjugate;
     denominator = denominator * conjugate;
 
+    throwIfZero(denominator.realPart);
+
     return ComplexNumber(enumerator.realPart/denominator.realPart, enumerator.imaginaryPart/denominator.realPart);
 }
 
 ComplexNumber ComplexNumber::operator/(double val) const{
+    throwIfZero(val);
     return ComplexNumber(realPart/val, imaginaryPart/val);
 }
 
@@ -116,6 +131,7 @@ ComplexNumber& ComplexNumber::operator/=(const ComplexNumber& other) {
 }
 
 ComplexNumber& ComplexNumber::operator/=(double val) {
+    throwIfZero(val);
     this->realPart /= val;
     this->imaginaryPart /= val;
 

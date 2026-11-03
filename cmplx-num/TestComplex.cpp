@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <cmath>
+#include <stdexcept>
 #include "Complex.h"
 
 int failed = 0;
@@ -27,6 +28,13 @@ void testInit() {
 
     check("init - real part is set", num.getRealPart() == 2);
     check("init - imaginary part is set", num.getImaginaryPart() == -3);
+}
+
+void testDefaultConstructor() {
+    ComplexNumber num;
+
+    check("default constructor - real part is 0", num.getRealPart() == 0);
+    check("default constructor - imaginary part is 0", num.getImaginaryPart() == 0);
 }
 
 void testSetters() {
@@ -79,6 +87,56 @@ void testDivision() {
     check("division - returns 0-1i", isClose(res, 0, -1));
     check("division - result times divisor gives dividend", isClose(res * num2, 2, -3));
     check("division - number divided by itself returns 1", isClose(num2 / num2, 1, 0));
+}
+
+void testDivisionByZero() {
+    ComplexNumber num(2, -3);
+    ComplexNumber zero;
+    bool thrown;
+
+    thrown = false;
+    try {
+        num / zero;
+    } catch (const std::domain_error&) {
+        thrown = true;
+    }
+    check("division by zero - complex / 0+0i throws", thrown);
+
+    thrown = false;
+    try {
+        num / 0.0;
+    } catch (const std::domain_error&) {
+        thrown = true;
+    }
+    check("division by zero - complex / 0.0 throws", thrown);
+
+    thrown = false;
+    try {
+        1 / zero;
+    } catch (const std::domain_error&) {
+        thrown = true;
+    }
+    check("division by zero - double / 0+0i throws", thrown);
+
+    thrown = false;
+    try {
+        num /= zero;
+    } catch (const std::domain_error&) {
+        thrown = true;
+    }
+    check("division by zero - /= 0+0i throws", thrown);
+    check("division by zero - /= complex leaves number untouched", isClose(num, 2, -3));
+
+    thrown = false;
+    try {
+        num /= 0.0;
+    } catch (const std::domain_error&) {
+        thrown = true;
+    }
+    check("division by zero - /= 0.0 throws", thrown);
+    check("division by zero - /= double leaves number untouched", isClose(num, 2, -3));
+
+    check("division by zero - dividing zero is fine", isClose(zero / num, 0, 0));
 }
 
 void testDoubleOperators() {
@@ -219,11 +277,13 @@ void testStreamInsertion() {
 int main() {
 
     testInit();
+    testDefaultConstructor();
     testSetters();
     testAddition();
     testSubtraction();
     testMultiplication();
     testDivision();
+    testDivisionByZero();
     testDoubleOperators();
     testDoubleOperatorsReversed();
     testCompoundAssignment();

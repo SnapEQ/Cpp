@@ -8,6 +8,7 @@ class ComplexNumber {
         double imaginaryPart;
 
     public:
+        ComplexNumber();
         ComplexNumber(double realPart, double imaginaryPart);
         double getRealPart() const;
         double getImaginaryPart() const;
