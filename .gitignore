@@ -68,3 +68,5 @@ Testing/
 .cache/
 .dSYM
 .DS_Store
+*.dSYM/
+.clangd
