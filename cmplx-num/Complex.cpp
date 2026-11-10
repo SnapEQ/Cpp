@@ -179,6 +179,14 @@ ComplexNumber operator/(double lhs, const ComplexNumber& rhs) {
     return lhsCmplx / rhs;
 }
 
+bool operator==(double lhs, const ComplexNumber& rhs) {
+    return rhs == lhs;
+}
+
+bool operator!=(double lhs, const ComplexNumber& rhs) {
+    return rhs != lhs;
+}
+
 std::ostream& operator<<(std::ostream& os, const ComplexNumber& num) {
     double imaginaryPart = num.getImaginaryPart();
     char sign = imaginaryPart < 0 ? '-' : '+';

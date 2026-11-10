@@ -201,6 +201,14 @@ void testChainedAssignment() {
 
     check("chained += - right side is applied first", isClose(num2, 1.7, 0.2));
     check("chained += - left side gets the sum of all", isClose(num1, 2.7, 0.5));
+
+    ComplexNumber num4(1.0, 0.3);
+    ComplexNumber num5(0.9, 0.1);
+
+    num4 *= num5 *= num3;
+
+    check("chained *= - right side is applied first", isClose(num5, 0.71, 0.17));
+    check("chained *= - left side gets the product of all", isClose(num4, 0.659, 0.383));
 }
 
 void testChainedAssignmentInBraces() {
@@ -238,6 +246,11 @@ void testEqualityDouble() {
     check("== double - imaginary part breaks equality", !(notReal == 1.5));
     check("!= double - imaginary part breaks equality", notReal != 1.5);
     check("!= double - real number equals double", !(real != 1.5));
+
+    check("reversed == double - real number equals double", 1.5 == real);
+    check("reversed == double - imaginary part breaks equality", !(1.5 == notReal));
+    check("reversed != double - imaginary part breaks equality", 1.5 != notReal);
+    check("reversed != double - real number equals double", !(1.5 != real));
 }
 
 void testAmplitude() {

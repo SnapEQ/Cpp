@@ -43,5 +43,7 @@ ComplexNumber operator+(double lhs, const ComplexNumber& rhs);
 ComplexNumber operator-(double lhs, const ComplexNumber& rhs);
 ComplexNumber operator*(double lhs, const ComplexNumber& rhs);
 ComplexNumber operator/(double lhs, const ComplexNumber& rhs);
+bool operator==(double lhs, const ComplexNumber& rhs);
+bool operator!=(double lhs, const ComplexNumber& rhs);
 std::ostream& operator<<(std::ostream& os, const ComplexNumber& num);
 
