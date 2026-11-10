@@ -4,17 +4,37 @@
 #include <istream>
 #include <ostream>
 
+double** Matrix::allocateData(int rows, int cols) {
+    double** data = new double*[rows];
+    int row = 0;
+
+    try {
+        for (; row < rows; ++row) {
+            data[row] = new double[cols];
+        }
+    } catch (...) {
+        freeData(data, row);
+        throw;
+    }
+
+    return data;
+}
+
+void Matrix::freeData(double** data, int rows) {
+    for (int row = 0; row < rows; ++row) {
+        delete[] data[row];
+    }
+
+    delete[] data;
+}
+
 void Matrix::release() {
 
     if (refCount_ != nullptr) {
         --(*refCount_);
 
         if (*refCount_ == 0) {
-            for (int row = 0; row < rows_; ++row) {
-                delete[] data_[row];
-            }
-
-            delete[] data_;
+            freeData(data_, rows_);
             delete refCount_;
         }
     }
@@ -26,11 +46,17 @@ void Matrix::detach() {
         return;
     }
 
-    double** newData = new double*[rows_];
+    double** newData = allocateData(rows_, cols_);
+    int* newRefCount = nullptr;
+
+    try {
+        newRefCount = new int(1);
+    } catch (...) {
+        freeData(newData, rows_);
+        throw;
+    }
 
     for (int row = 0; row < rows_; ++row) {
-        newData[row] = new double[cols_];
-
         for (int col = 0; col < cols_; ++col) {
             newData[row][col] = data_[row][col];
         }
@@ -39,7 +65,7 @@ void Matrix::detach() {
     --(*refCount_);
 
     data_ = newData;
-    refCount_ = new int(1);
+    refCount_ = newRefCount;
 }
 
 void Matrix::checkIndex(int row, int col) const {
@@ -59,18 +85,20 @@ Matrix::Matrix(int rows, int cols)
         return;
     }
 
-    data_ = new double*[rows_];
+    data_ = allocateData(rows_, cols_);
+
+    try {
+        refCount_ = new int(1);
+    } catch (...) {
+        freeData(data_, rows_);
+        throw;
+    }
 
     for (int row = 0; row < rows_; ++row) {
-        data_[row] = new double[cols_];
-
         for (int col = 0; col < cols_; ++col) {
             data_[row][col] = 0.0;
         }
     }
-
-    refCount_ = new int(1);
-
 }
 
 Matrix::Matrix(const Matrix& other) 

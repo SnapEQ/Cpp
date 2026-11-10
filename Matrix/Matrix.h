@@ -10,6 +10,9 @@ class Matrix {
         double** data_;
         int* refCount_;
 
+        static double** allocateData(int rows, int cols);
+        static void freeData(double** data, int rows);
+
         void release();
         void detach();
         void checkIndex(int row, int col) const;
@@ -34,7 +37,7 @@ class Matrix {
 
         };
 
-        Matrix(int rows = 0, int cols = 0);
+        explicit Matrix(int rows = 0, int cols = 0);
         Matrix(const Matrix& other);
         Matrix& operator=(const Matrix& other);
         ~Matrix();
