@@ -65,6 +65,8 @@ Poly Poly::operator+(const Poly &other) const{
 Poly Poly::operator+(double val) const {
     Poly res = *this;
     res[0] += val;
+
+    res.removeZeros();
     return res;
 }
 
@@ -81,6 +83,8 @@ Poly Poly::operator-(const Poly& other) const {
 Poly Poly::operator-(double val) const {
     Poly res = *this;
     res[0] -= val;
+
+    res.removeZeros();
     return res;
 }
 
