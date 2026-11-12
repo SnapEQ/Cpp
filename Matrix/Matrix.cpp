@@ -4,7 +4,7 @@
 #include <istream>
 #include <ostream>
 
-double** Matrix::allocateData(int rows, int cols) {
+static double** allocateData(int rows, int cols) {
     double** data = new double*[rows];
     int row = 0;
 
@@ -13,14 +13,17 @@ double** Matrix::allocateData(int rows, int cols) {
             data[row] = new double[cols];
         }
     } catch (...) {
-        freeData(data, row);
+        for (int allocated = 0; allocated < row; ++allocated) {
+            delete[] data[allocated];
+        }
+        delete[] data;
         throw;
     }
 
     return data;
 }
 
-void Matrix::freeData(double** data, int rows) {
+static void freeData(double** data, int rows) {
     for (int row = 0; row < rows; ++row) {
         delete[] data[row];
     }
@@ -28,105 +31,84 @@ void Matrix::freeData(double** data, int rows) {
     delete[] data;
 }
 
-void Matrix::release() {
+struct Matrix::MatrixBuffer {
+    double** data;
+    int rows;
+    int cols;
+    int refCount;
 
-    if (refCount_ != nullptr) {
-        --(*refCount_);
-
-        if (*refCount_ == 0) {
-            freeData(data_, rows_);
-            delete refCount_;
+    MatrixBuffer(int nrows, int ncols)
+        : data(nullptr), rows(nrows), cols(ncols), refCount(1)
+    {
+        if (rows < 0 || cols < 0) {
+            throw MatrixInvalidDimensions();
         }
+
+        data = allocateData(rows, cols);
+
+        for (int row = 0; row < rows; ++row) {
+            for (int col = 0; col < cols; ++col) {
+                data[row][col] = 0.0;
+            }
+        }
+    }
+
+    ~MatrixBuffer() {
+        freeData(data, rows);
+    }
+
+    MatrixBuffer* detach() {
+        if (refCount == 1) {
+            return this;
+        }
+
+        MatrixBuffer* copy = new MatrixBuffer(rows, cols);
+
+        for (int row = 0; row < rows; ++row) {
+            for (int col = 0; col < cols; ++col) {
+                copy->data[row][col] = data[row][col];
+            }
+        }
+
+        --refCount;
+        return copy;
+    }
+
+    MatrixBuffer(const MatrixBuffer&) = delete;
+    MatrixBuffer& operator=(const MatrixBuffer&) = delete;
+};
+
+void Matrix::release() {
+    if (--buffer_->refCount == 0) {
+        delete buffer_;
     }
 }
 
 void Matrix::detach() {
-
-    if (refCount_ == nullptr || *refCount_ == 1) {
-        return;
-    }
-
-    double** newData = allocateData(rows_, cols_);
-    int* newRefCount = nullptr;
-
-    try {
-        newRefCount = new int(1);
-    } catch (...) {
-        freeData(newData, rows_);
-        throw;
-    }
-
-    for (int row = 0; row < rows_; ++row) {
-        for (int col = 0; col < cols_; ++col) {
-            newData[row][col] = data_[row][col];
-        }
-    }
-
-    --(*refCount_);
-
-    data_ = newData;
-    refCount_ = newRefCount;
+    buffer_ = buffer_->detach();
 }
 
 void Matrix::checkIndex(int row, int col) const {
-    if (row < 1 || row > rows_ || col < 1 || col > cols_) {
+    if (row < 1 || row > buffer_->rows || col < 1 || col > buffer_->cols) {
         throw MatrixIndexOutOfRange();
     }
 }
 
-Matrix::Matrix(int rows, int cols) 
-    : rows_(rows), cols_(cols), data_(nullptr), refCount_(nullptr) 
+Matrix::Matrix(int rows, int cols)
+    : buffer_(new MatrixBuffer(rows, cols))
 {
-    if (rows < 0 || cols < 0) {
-        throw MatrixInvalidDimensions();
-    }
-
-    if (rows == 0 || cols == 0) {
-        return;
-    }
-
-    data_ = allocateData(rows_, cols_);
-
-    try {
-        refCount_ = new int(1);
-    } catch (...) {
-        freeData(data_, rows_);
-        throw;
-    }
-
-    for (int row = 0; row < rows_; ++row) {
-        for (int col = 0; col < cols_; ++col) {
-            data_[row][col] = 0.0;
-        }
-    }
 }
 
-Matrix::Matrix(const Matrix& other) 
-    : rows_(other.rows_),
-    cols_(other.cols_),
-    data_(other.data_),
-    refCount_(other.refCount_)
+Matrix::Matrix(const Matrix& other)
+    : buffer_(other.buffer_)
 {
-    if (refCount_ != nullptr) {
-        ++(*refCount_);
-    }
+    ++buffer_->refCount;
 }
 
 Matrix& Matrix::operator=(const Matrix& other) {
-    if (this == &other) {
-        return *this;
-    }
-
+    ++other.buffer_->refCount;
     release();
-
-    rows_ = other.rows_;
-    cols_ = other.cols_;
-    data_ = other.data_;
-    refCount_ = other.refCount_;
-
-    if (refCount_ != nullptr) {
-        ++(*refCount_);
-    }
+    buffer_ = other.buffer_;
 
     return *this;
 }
@@ -137,25 +119,25 @@ Matrix::~Matrix() {
 }
 
 int Matrix::rows() const {
-    return rows_;
+    return buffer_->rows;
 }
 
 int Matrix::cols() const {
-    return cols_;
+    return buffer_->cols;
 }
 
 int Matrix::refCount() const {
-    return refCount_ != nullptr ? *refCount_ : 0;
+    return buffer_->refCount;
 }
 
 bool Matrix::sharesDataWith(const Matrix& other) const {
-    return data_ != nullptr && data_ == other.data_;
+    return buffer_ == other.buffer_;
 }
 
 double Matrix::operator()(int row, int col) const {
 
     checkIndex(row, col);
-    return data_[row - 1][col - 1];
+    return buffer_->data[row - 1][col - 1];
 }
 
 Matrix::ElementProxy Matrix::operator()(int row, int col) {
@@ -171,12 +153,12 @@ Matrix::ElementProxy::ElementProxy(Matrix& matrix, int row, int col)
 }
 
 Matrix::ElementProxy::operator double() const {
-    return matrix_.data_[row_ - 1][col_ - 1];
+    return matrix_.buffer_->data[row_ - 1][col_ - 1];
 }
 
 Matrix::ElementProxy& Matrix::ElementProxy::operator=(double value) {
     matrix_.detach();
-    matrix_.data_[row_ - 1][col_ - 1] = value;
+    matrix_.buffer_->data[row_ - 1][col_ - 1] = value;
     return *this;
 }
 
@@ -186,27 +168,31 @@ Matrix::ElementProxy& Matrix::ElementProxy::operator=(const ElementProxy& other)
 
 Matrix::ElementProxy& Matrix::ElementProxy::operator+=(double value) {
     matrix_.detach();
-    matrix_.data_[row_ - 1][col_ - 1] += value;
+    matrix_.buffer_->data[row_ - 1][col_ - 1] += value;
     return *this;
 }
 
 Matrix::ElementProxy& Matrix::ElementProxy::operator-=(double value) {
     matrix_.detach();
-    matrix_.data_[row_ - 1][col_ - 1] -= value;
+    matrix_.buffer_->data[row_ - 1][col_ - 1] -= value;
     return *this;
 }
 
 Matrix Matrix::operator+(const Matrix& rhs) const {
 
-    if (rows_ != rhs.rows_ || cols_ != rhs.cols_) {
+    const int rows = buffer_->rows;
+    const int cols = buffer_->cols;
+
+    if (rows != rhs.buffer_->rows || cols != rhs.buffer_->cols) {
         throw MatrixDimensionsMismatch();
     }
 
-    Matrix res(rows_, cols_);
+    Matrix res(rows, cols);
 
-    for (int row = 0; row < rows_; ++row) {
-        for (int col = 0; col < cols_; ++col) {
-            res.data_[row][col] = data_[row][col] + rhs.data_[row][col];
+    for (int row = 0; row < rows; ++row) {
+        for (int col = 0; col < cols; ++col) {
+            res.buffer_->data[row][col] =
+                buffer_->data[row][col] + rhs.buffer_->data[row][col];
         }
     }
 
@@ -214,14 +200,19 @@ Matrix Matrix::operator+(const Matrix& rhs) const {
 }
 
 Matrix Matrix::operator-(const Matrix& rhs) const {
-    if (rows_ != rhs.rows_ || cols_ != rhs.cols_) {
+
+    const int rows = buffer_->rows;
+    const int cols = buffer_->cols;
+
+    if (rows != rhs.buffer_->rows || cols != rhs.buffer_->cols) {
         throw MatrixDimensionsMismatch();
     }
 
-    Matrix res(rows_,cols_);
-    for (int row = 0; row < rows_; ++row) {
-        for (int col = 0; col < cols_; ++col) {
-            res.data_[row][col] = data_[row][col] - rhs.data_[row][col];
+    Matrix res(rows, cols);
+    for (int row = 0; row < rows; ++row) {
+        for (int col = 0; col < cols; ++col) {
+            res.buffer_->data[row][col] =
+                buffer_->data[row][col] - rhs.buffer_->data[row][col];
         }
     }
 
@@ -230,16 +221,16 @@ Matrix Matrix::operator-(const Matrix& rhs) const {
 
 Matrix Matrix::operator*(const Matrix& rhs) const {
 
-    if (cols_ != rhs.rows_) {
+    if (buffer_->cols != rhs.buffer_->rows) {
         throw MatrixDimensionsMismatch();
     }
 
-    Matrix res(rows_,rhs.cols_);
+    Matrix res(buffer_->rows, rhs.buffer_->cols);
 
-    for (int i = 0; i < rows_; ++i){
-        for (int j = 0; j < rhs.cols_; ++j){
-            for (int k = 0; k < rhs.rows_; ++k) {
-                res.data_[i][j] += data_[i][k] * rhs.data_[k][j]; 
+    for (int i = 0; i < buffer_->rows; ++i){
+        for (int j = 0; j < rhs.buffer_->cols; ++j){
+            for (int k = 0; k < rhs.buffer_->rows; ++k) {
+                res.buffer_->data[i][j] += buffer_->data[i][k] * rhs.buffer_->data[k][j];
             }
         }
     }
@@ -249,8 +240,8 @@ Matrix Matrix::operator*(const Matrix& rhs) const {
 }
 
 Matrix& Matrix::operator+=(const Matrix& rhs) {
- 
-    if (cols_ != rhs.cols_ || rows_ != rhs.rows_ ) {
+
+    if (buffer_->cols != rhs.buffer_->cols || buffer_->rows != rhs.buffer_->rows) {
         throw MatrixDimensionsMismatch();
     }
 
@@ -262,14 +253,14 @@ Matrix& Matrix::operator+=(const Matrix& rhs) {
 
 Matrix& Matrix::operator-=(const Matrix& rhs) {
 
-    if (cols_ != rhs.cols_ || rows_ != rhs.rows_ ) {
+    if (buffer_->cols != rhs.buffer_->cols || buffer_->rows != rhs.buffer_->rows) {
         throw MatrixDimensionsMismatch();
     }
 
     this->detach();
-    for (int row = 0; row < rows_; ++row) {
-        for (int col = 0; col < cols_; ++col) {
-            data_[row][col] -= rhs.data_[row][col];
+    for (int row = 0; row < buffer_->rows; ++row) {
+        for (int col = 0; col < buffer_->cols; ++col) {
+            buffer_->data[row][col] -= rhs.buffer_->data[row][col];
         }
     }
     return *this;
@@ -277,7 +268,7 @@ Matrix& Matrix::operator-=(const Matrix& rhs) {
 
 Matrix& Matrix::operator*=(const Matrix& rhs) {
 
-    if (cols_ != rhs.rows_) {
+    if (buffer_->cols != rhs.buffer_->rows) {
         throw MatrixDimensionsMismatch();
     }
 
@@ -288,13 +279,13 @@ Matrix& Matrix::operator*=(const Matrix& rhs) {
 }
 
 bool Matrix::operator==(const Matrix& rhs) const {
-    if (cols_ != rhs.cols_ || rows_ != rhs.rows_) {
+    if (buffer_->cols != rhs.buffer_->cols || buffer_->rows != rhs.buffer_->rows) {
         return false;
     }
 
-    for (int row = 0; row < rows_; ++row) {
-        for (int col = 0; col < cols_; ++col) {
-            if (data_[row][col] != rhs.data_[row][col]) {
+    for (int row = 0; row < buffer_->rows; ++row) {
+        for (int col = 0; col < buffer_->cols; ++col) {
+            if (buffer_->data[row][col] != rhs.buffer_->data[row][col]) {
                 return false;
             }
         }
@@ -308,18 +299,20 @@ bool Matrix::operator!=(const Matrix& rhs) const {
 }
 
 std::ostream& operator<<(std::ostream& out, const Matrix& matrix) {
-    for (int row = 0; row < matrix.rows_; ++row) {
+    const Matrix::MatrixBuffer& buffer = *matrix.buffer_;
+
+    for (int row = 0; row < buffer.rows; ++row) {
         out << '[';
 
-        for (int col = 0; col < matrix.cols_; ++col) {
+        for (int col = 0; col < buffer.cols; ++col) {
             if (col != 0) {
                 out << ' ';
             }
-            out << matrix.data_[row][col];
+            out << buffer.data[row][col];
         }
 
         out << ']';
-        if (row + 1 < matrix.rows_) {
+        if (row + 1 < buffer.rows) {
             out << '\n';
         }
     }
@@ -341,7 +334,7 @@ std::istream& operator>>(std::istream& in, Matrix& matrix) {
 
     for (int row = 0; row < rows; ++row) {
         for (int col = 0; col < cols; ++col) {
-            if (!(in >> result.data_[row][col])) {
+            if (!(in >> result.buffer_->data[row][col])) {
                 throw MatrixReadError();
             }
         }
@@ -350,4 +343,3 @@ std::istream& operator>>(std::istream& in, Matrix& matrix) {
     matrix = result;
     return in;
 }
-

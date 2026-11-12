@@ -5,13 +5,8 @@
 
 class Matrix {
     private:
-        int rows_;
-        int cols_;
-        double** data_;
-        int* refCount_;
-
-        static double** allocateData(int rows, int cols);
-        static void freeData(double** data, int rows);
+        struct MatrixBuffer;
+        MatrixBuffer* buffer_;
 
         void release();
         void detach();
